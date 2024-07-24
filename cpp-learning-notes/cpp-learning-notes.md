@@ -1,6 +1,37 @@
 # cpp-learning-notes
 cpp-learning-notes
 
+# C++析构函数需要是虚函数吗
+在C++中，析构函数需要是虚函数的情况主要是当一个类被用作基类，并且有可能通过指向该基类的指针来删除派生类对象时。这样可以确保调用派生类对象的正确析构函数，从而避免资源泄漏或其他未定义行为。
+
+以下是一个例子：
+
+```cpp
+class Base {
+public:
+    virtual ~Base() {
+        std::cout << "Base Destructor" << std::endl;
+    }
+};
+
+class Derived : public Base {
+public:
+    ~Derived() override {
+        std::cout << "Derived Destructor" << std::endl;
+    }
+};
+
+int main() {
+    Base* b = new Derived();
+    delete b; // 调用 Derived 的析构函数，然后调用 Base 的析构函数
+    return 0;
+}
+```
+
+在上面的代码中，如果 `Base` 的析构函数不是虚函数，那么通过 `Base*` 指针删除 `Derived` 对象时，只会调用 `Base` 的析构函数，而不会调用 `Derived` 的析构函数。这可能会导致资源泄漏或其他问题。
+
+因此，如果你有一个类打算作为基类，并且希望通过基类指针删除派生类对象，那么你应该将基类的析构函数声明为虚函数。
+
 # TCP拥塞控制算法、TCP和UDP区别、进程和线程区别
 当然可以！下面是详细解释：
 
