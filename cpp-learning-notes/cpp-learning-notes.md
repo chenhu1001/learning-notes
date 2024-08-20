@@ -1,6 +1,109 @@
 # cpp-learning-notes
 cpp-learning-notes
 
+# std::function灵活性使用说明
+为了更好地说明 `std::function` 的灵活性，我们来看一个例子，其中 `std::function` 允许你传递各种类型的可调用对象（如普通函数、lambda 表达式、成员函数等）作为回调函数。
+
+### 示例代码
+
+```cpp
+#include <iostream>
+#include <functional>
+
+// 定义回调函数类型
+typedef std::function<void(uint8_t* data, int len)> ReadDataCallbackFunc;
+
+class Reader {
+public:
+    // 注册回调函数
+    void RegisterCallBack(ReadDataCallbackFunc func) {
+        cbFunc_ = func;
+    }
+
+    // 模拟数据读取并调用回调函数
+    void ReadData() {
+        uint8_t data[5] = {1, 2, 3, 4, 5};
+        if (cbFunc_) {
+            cbFunc_(data, 5);
+        }
+    }
+
+private:
+    ReadDataCallbackFunc cbFunc_;
+};
+
+// 普通函数作为回调
+void GlobalFunctionCallback(uint8_t* data, int len) {
+    std::cout << "GlobalFunctionCallback: ";
+    for (int i = 0; i < len; ++i) {
+        std::cout << static_cast<int>(data[i]) << " ";
+    }
+    std::cout << std::endl;
+}
+
+int main() {
+    Reader reader;
+
+    // 1. 使用普通函数作为回调
+    reader.RegisterCallBack(GlobalFunctionCallback);
+    reader.ReadData();
+
+    // 2. 使用 lambda 表达式作为回调
+    reader.RegisterCallBack([](uint8_t* data, int len) {
+        std::cout << "LambdaCallback: ";
+        for (int i = 0; i < len; ++i) {
+            std::cout << static_cast<int>(data[i]) << " ";
+        }
+        std::cout << std::endl;
+    });
+    reader.ReadData();
+
+    // 3. 使用成员函数作为回调
+    class MemberClass {
+    public:
+        void MemberFunctionCallback(uint8_t* data, int len) {
+            std::cout << "MemberFunctionCallback: ";
+            for (int i = 0; i < len; ++i) {
+                std::cout << static_cast<int>(data[i]) << " ";
+            }
+            std::cout << std::endl;
+        }
+    };
+
+    MemberClass obj;
+    reader.RegisterCallBack(std::bind(&MemberClass::MemberFunctionCallback, &obj, std::placeholders::_1, std::placeholders::_2));
+    reader.ReadData();
+
+    return 0;
+}
+```
+
+### 解释
+
+1. **普通函数作为回调**
+    - `GlobalFunctionCallback` 是一个普通函数，我们直接将其注册为回调函数。
+    - 通过 `reader.RegisterCallBack(GlobalFunctionCallback);` 将其传递给 `Reader` 类的 `RegisterCallBack` 方法。
+  
+2. **lambda 表达式作为回调**
+    - 我们可以使用 lambda 表达式作为回调函数。
+    - 通过 `reader.RegisterCallBack([](uint8_t* data, int len) {...});` 将 lambda 表达式传递给 `RegisterCallBack` 方法。
+  
+3. **成员函数作为回调**
+    - 这里定义了一个类 `MemberClass`，其中包含一个成员函数 `MemberFunctionCallback`。
+    - 使用 `std::bind` 绑定 `MemberClass` 的成员函数并将其传递给 `RegisterCallBack` 方法。`std::bind` 会生成一个可调用对象，该对象将 `MemberFunctionCallback` 与 `obj` 实例关联起来。
+
+### 运行结果
+
+```plaintext
+GlobalFunctionCallback: 1 2 3 4 5 
+LambdaCallback: 1 2 3 4 5 
+MemberFunctionCallback: 1 2 3 4 5 
+```
+
+### 总结
+
+通过使用 `std::function`，`Reader` 类能够接受并调用不同类型的可调用对象，如普通函数、lambda 表达式、以及类的成员函数。这种灵活性是 `std::function` 的主要优势，它允许你在不同情况下使用不同的回调函数，而不需要修改 `Reader` 类的代码。
+
 # C++析构函数需要是虚函数吗
 在C++中，析构函数需要是虚函数的情况主要是当一个类被用作基类，并且有可能通过指向该基类的指针来删除派生类对象时。这样可以确保调用派生类对象的正确析构函数，从而避免资源泄漏或其他未定义行为。
 
