@@ -1,6 +1,74 @@
 # cpp-learning-notes
 cpp-learning-notes
 
+# STL中的6大组件
+```
+#include <vector>
+#include <functional>
+#include <iostream>
+
+using namespace std;
+
+int main() {
+    int ia[6] = {27, 210, 12, 47, 109, 83};
+    vector<int, allocator<int>> vi(ia, ia + 6);
+    cout << count_if(vi.begin(), vi.end(), not1(bind2nd(less<int>(), 40))) << endl;
+
+    std::cout << "Hello, World!" << std::endl;
+    return 0;
+}
+```
+这段代码使用了C++标准模板库（STL）中的多个组件，包括容器、算法、函数对象、迭代器、分配器和适配器。让我们通过这段代码来解释STL的六大组件：
+
+### 1. **容器（Containers）**
+- **`vector<int, allocator<int>> vi(ia, ia+6);`**
+  - 这里使用了`std::vector`，这是一个动态数组容器，能够存储整数类型的数据。`vector`是STL中的一个序列容器，允许快速随机访问，并且能够自动调整大小。
+  - `allocator<int>`是默认的内存分配器，用于为`vector`分配和管理内存。
+  - `vi(ia, ia+6)`构造一个`vector`，将数组`ia`中的元素（从`ia[0]`到`ia[5]`）复制到`vector`中。
+
+### 2. **算法（Algorithms）**
+- **`count_if(vi.begin(), vi.end(), not1(bind2nd(less<int>(), 40)));`**
+  - 这里使用了`std::count_if`算法，它用于统计满足特定条件的元素数量。
+  - `count_if`是一个非修改性算法，它接受三个参数：一个范围（由`vi.begin()`和`vi.end()`表示）和一个谓词（用于判断元素是否符合条件）。
+
+### 3. **迭代器（Iterators）**
+- **`vi.begin(), vi.end()`**
+  - `vi.begin()`和`vi.end()`返回`vector`的迭代器，分别指向`vector`的起始位置和结束位置。迭代器是STL的核心概念，用于遍历容器中的元素。
+  - 这里使用的是`vector`的随机访问迭代器，它支持像指针一样的操作。
+
+### 4. **函数对象（Function Objects or Functors）**
+- **`less<int>()`**
+  - `less<int>`是一个标准的函数对象，用于实现"小于"比较。它是STL中的一个预定义的仿函数类（function object class），能够在排序和查找算法中使用。
+  - 函数对象可以像普通函数一样被调用，但它们可以持有状态，或者通过模板参数调整行为。
+
+### 5. **适配器（Adapters）**
+- **`not1(bind2nd(less<int>(), 40))`**
+  - 这里使用了两个适配器：
+    - **`bind2nd(less<int>(), 40)`**：这是一个绑定适配器，用于将二元函数对象转换为一元函数对象，将`less<int>`的第二个参数绑定为40。`bind2nd`将`less<int>(x, 40)`转换为一个只需要一个参数的函数对象。
+    - **`not1(...)`**：这是一个逻辑适配器，用于取反。它将`bind2nd(less<int>(), 40)`的结果取反，即将小于40的判断转换为大于等于40的判断。
+  - 适配器用于改变函数对象的接口或行为，使其适应不同的需求。
+
+### 6. **分配器（Allocators）**
+- **`allocator<int>`**
+  - `allocator`是STL中的内存分配器，用于管理容器元素的内存分配和释放。`std::vector`默认使用`allocator`来管理其内部元素的内存。
+  - 在这段代码中，`allocator<int>`被显式地写出作为`vector`的模板参数，但它通常是隐式使用的。
+
+### 程序执行过程：
+1. **初始化数组和向量：**
+   - 创建一个数组`ia`并将其元素复制到`vector` `vi`中。
+   
+2. **使用`count_if`算法：**
+   - 遍历`vector` `vi`中的元素，统计大于等于40的元素数量。`not1(bind2nd(less<int>(), 40))`生成了一个谓词，这个谓词返回`true`当且仅当元素大于等于40。
+
+3. **输出结果：**
+   - 将统计结果输出到标准输出流（`cout`）。
+
+### 输出结果：
+- 这段代码会输出大于等于40的元素数量。数组`ia`中的元素有：`27, 210, 12, 47, 109, 83`，其中大于等于40的有`210, 47, 109, 83`，所以输出为`4`。
+
+### 总结：
+这段代码通过示例展示了STL六大组件如何在C++中协同工作，从而实现高效的容器操作和算法应用。这种组合使用体现了STL的设计理念：利用泛型编程，使代码更加灵活和可重用。
+
 # C++仿函数和匿名函数的区别
 在C++中，仿函数（functor）和匿名函数（lambda表达式）是两种不同的功能对象，尽管它们都可以像函数一样被调用，但它们的实现和使用场景有所不同。以下是它们的区别：
 
