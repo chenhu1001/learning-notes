@@ -1,6 +1,83 @@
 # cpp-learning-notes
 cpp-learning-notes
 
+# C++仿函数和匿名函数的区别
+在C++中，仿函数（functor）和匿名函数（lambda表达式）是两种不同的功能对象，尽管它们都可以像函数一样被调用，但它们的实现和使用场景有所不同。以下是它们的区别：
+
+### 1. 定义方式
+- **仿函数**：
+  - 仿函数是通过定义一个包含`operator()`的类来实现的。这个类的对象就可以像函数一样使用。
+  - 例如：
+    ```cpp
+    struct Functor {
+        int operator()(int x) const {
+            return x * x;
+        }
+    };
+    ```
+
+- **匿名函数（Lambda表达式）**：
+  - 匿名函数是通过C++11引入的lambda表达式来定义的，是一种内联的函数定义方式，通常用于需要短期使用的小函数。
+  - 例如：
+    ```cpp
+    auto lambda = [](int x) { return x * x; };
+    ```
+
+### 2. 使用方式
+- **仿函数**：
+  - 使用仿函数时，你首先需要创建仿函数的对象，然后通过对象调用`operator()`方法。
+  - 例如：
+    ```cpp
+    Functor functor;
+    int result = functor(5);
+    ```
+
+- **匿名函数（Lambda表达式）**：
+  - 使用lambda表达式时，你可以直接调用它，也可以将它赋值给一个变量来多次调用。
+  - 例如：
+    ```cpp
+    auto lambda = [](int x) { return x * x; };
+    int result = lambda(5);
+    ```
+
+### 3. 状态和捕获
+- **仿函数**：
+  - 仿函数类可以通过成员变量保存状态，因此它们可以在多次调用时保持内部状态。
+  - 例如：
+    ```cpp
+    struct Functor {
+        int factor;
+        Functor(int f) : factor(f) {}
+        int operator()(int x) const {
+            return x * factor;
+        }
+    };
+    Functor functor(3);
+    int result = functor(5);  // result 为 15
+    ```
+
+- **匿名函数（Lambda表达式）**：
+  - Lambda表达式可以通过捕获外部变量来保存状态，这种捕获可以通过值传递或引用传递实现。
+  - 例如：
+    ```cpp
+    int factor = 3;
+    auto lambda = [factor](int x) { return x * factor; };
+    int result = lambda(5);  // result 为 15
+    ```
+
+### 4. 适用场景
+- **仿函数**：
+  - 仿函数通常适用于需要复杂逻辑或需要多次调用且保持状态的场景。
+  - 例如，在标准库中的一些算法（如`std::sort`）中，你可以定义一个自定义的比较器作为仿函数。
+
+- **匿名函数（Lambda表达式）**：
+  - Lambda表达式通常用于简短的、内联的、无需额外定义类的小型功能块。它们通常在STL算法中用作回调函数。
+  - 例如，使用`std::for_each`时，可以传递一个lambda表达式来定义遍历过程中执行的操作。
+
+### 总结
+- **仿函数**适合用于复杂的逻辑、需要状态或重复使用的场景。
+- **匿名函数**更简洁，适合临时使用的小型函数，尤其是在STL算法中作为回调函数使用。
+
 # std::function灵活性使用说明
 为了更好地说明 `std::function` 的灵活性，我们来看一个例子，其中 `std::function` 允许你传递各种类型的可调用对象（如普通函数、lambda 表达式、成员函数等）作为回调函数。
 
