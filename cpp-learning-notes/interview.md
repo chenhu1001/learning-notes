@@ -5867,6 +5867,729 @@ int main() {
 }
 ```
 
+# C++11
+### 语言特性
+
+#### 1. `auto`关键字
+- **作用及用法**：`auto`用于自动推导变量的类型。编译器根据初始化表达式推断变量类型。例如：
+  ```cpp
+  auto x = 10; // int
+  auto y = 3.14; // double
+  auto p = new int(10); // int*
+  ```
+- **区别**：C++11之前的`auto`用于声明局部变量，表明它们具有自动存储期，类似于省略的`register`。C++11中`auto`改变了含义，表示自动类型推导。
+- **优缺点**：
+  - 优点：简化代码、减少重复、提高可读性。
+  - 缺点：过度使用可能导致代码可读性降低。
+
+#### 2. `nullptr`
+- **引入原因**：`nullptr`解决了使用`NULL`和`0`表示空指针时可能引起的歧义。例如，`NULL`通常定义为`0`，在重载函数选择时可能不明确。
+- **区别**：`nullptr`是`nullptr_t`类型的字面量，可以隐式转换为任意指针类型，但不能转换为整型。`NULL`通常是`0`或`(void*)0`，在一些重载函数中会产生歧义。
+  ```cpp
+  void f(int);
+  void f(char*);
+  f(0); // 调用f(int)
+  f(nullptr); // 调用f(char*)
+  ```
+
+#### 3. `decltype`
+- **作用**：`decltype`用于获取表达式的类型，而不进行计算。它主要用于声明与现有变量类型相同的变量。
+  ```cpp
+  int x = 0;
+  decltype(x) y = 5; // y 的类型为 int
+  ```
+- **示例**：
+  ```cpp
+  int n = 4;
+  decltype(n) m = 5; // m 的类型为 int
+  decltype(n + 1.0) x = 3.14; // x 的类型为 double
+  ```
+
+#### 4. 范围for循环 (Range-based for loop)
+- **用法**：用于遍历集合或容器中的元素：
+  ```cpp
+  std::vector<int> vec = {1, 2, 3};
+  for (auto& elem : vec) {
+    std::cout << elem << " ";
+  }
+  ```
+- **优缺点**：
+  - 优点：简化遍历代码，避免`begin()`、`end()`等繁琐操作。
+  - 缺点：无法直接访问元素索引；不能修改集合结构（如插入、删除）。
+
+#### 5. 移动语义 (Move Semantics) 和 `std::move`
+- **移动语义**：允许资源的所有权从一个对象转移到另一个对象，而不是拷贝。通过右值引用(`T&&`)实现。
+- **实现原理**：定义移动构造函数和移动赋值运算符，转移资源而非复制。
+  ```cpp
+  class MyClass {
+  public:
+      MyClass(MyClass&& other) noexcept {
+          this->ptr = other.ptr;
+          other.ptr = nullptr;
+      }
+  };
+  ```
+- **`std::move`**：将左值转换为右值引用，使其能匹配移动构造函数或移动赋值运算符。`std::move`并不移动对象，只是转换类型。
+  ```cpp
+  std::string str = "Hello";
+  std::string moved_str = std::move(str); // str变为无效状态
+  ```
+
+#### 6. 右值引用 (Rvalue Reference)
+- **定义**：右值引用(`T&&`)是引用右值的引用类型。左值和右值的区别在于是否可以取地址。
+- **性能提升**：右值引用可以避免不必要的拷贝操作，直接转移资源。
+  ```cpp
+  std::vector<int> createVector() {
+      return std::vector<int>(1000);
+  }
+  std::vector<int> vec = createVector(); // 移动构造，而非拷贝
+  ```
+
+#### 7. 初始化列表 (Initializer List)
+- **作用**：为容器等提供方便的初始化方式。
+  ```cpp
+  std::vector<int> vec = {1, 2, 3, 4};
+  ```
+- **`std::initializer_list`**：表示一组常量值，用于构造函数或其他操作中。
+  ```cpp
+  void foo(std::initializer_list<int> list) {
+      for (auto elem : list) {
+          std::cout << elem << " ";
+      }
+  }
+  foo({1, 2, 3, 4}); // 输出 1 2 3 4
+  ```
+
+#### 8. Lambda 表达式
+- **语法**：`[capture](parameters) -> return_type { body }`
+  ```cpp
+  auto sum = [](int a, int b) -> int { return a + b; };
+  std::cout << sum(1, 2); // 输出 3
+  ```
+- **捕获列表**：
+  - `[&]`：捕获所有外部变量的引用。
+  - `[=]`：捕获所有外部变量的副本。
+  - `[this]`：捕获当前对象。
+  ```cpp
+  int x = 10;
+  auto lambda = [x]() { return x + 5; }; // 捕获 x 的副本
+  auto lambda_ref = [&x]() { return x + 5; }; // 捕获 x 的引用
+  ```
+
+#### 9. `constexpr`
+- **区别**：`const`表示变量不能修改，但可能在运行时确定；`constexpr`要求编译时常量。
+- **`constexpr`函数**：可以在编译时计算的函数。必须只有一个返回值，且不含非`constexpr`表达式。
+  ```cpp
+  constexpr int square(int x) {
+      return x * x;
+  }
+  constexpr int result = square(5); // 编译时计算
+  ```
+
+### 标准库
+
+#### 1. 智能指针 (Smart Pointers)
+- **类型及用途**：
+  - `std::unique_ptr`：独占所有权，不可复制，仅可移动。
+  - `std::shared_ptr`：共享所有权，可复制，自动管理引用计数。
+  - `std::weak_ptr`：弱引用，不增加引用计数，防止循环引用。
+- **避免循环引用**：用`std::weak_ptr`替代`std::shared_ptr`，断开引用环。
+  ```cpp
+  struct B;
+  struct A {
+      std::shared_ptr<B> b_ptr;
+  };
+  struct B {
+      std::weak_ptr<A> a_ptr; // 避免循环引用
+  };
+  ```
+
+#### 2. `std::tuple`
+- **优点**：`std::tuple`可以容纳不同类型的元素，而`std::pair`只能容纳两个元素。
+  ```cpp
+  std::tuple<int, double, std::string> t(1, 2.3, "example");
+  auto val = std::get<2>(t); // 获取第三个元素 "example"
+  ```
+- **解包**：
+  ```cpp
+  auto [a, b, c] = t; // C++17结构化绑定
+  ```
+
+#### 3. `std::function` 和 `std::bind`
+- **`std::function`**：通用的函数包装器，可存储函数、Lambda表达式、函数对象。
+  ```cpp
+  std::function<int(int, int)> func = [](int a, int b) { return a + b; };
+  ```
+- **`std::bind`**：绑定函数的部分参数，生成新的可调用对象。
+  ```cpp
+  auto bindFunc = std::bind(func, std::placeholders::_1, 10);
+  std::cout << bindFunc(5); // 输出 15
+  ```
+
+#### 4. `std::unordered_map`
+- **区别**：
+  - `std::unordered_map`是基于哈希表实现的，无序访问，平均插入、查找、删除复杂度为`O(1)`。
+  - `std::map`是基于红黑树实现的，有序访问，复杂度为`O(log n)`。
+- **自定义哈希函数**：
+  ```cpp
+  struct MyHash {
+      size_t operator()(const MyType& t) const {
+          return std::hash<int>()(t.field1) ^ std::hash<int>()(t.field2);
+      }
+  };
+  std::unordered_map<MyType, int, MyHash> my_map;
+  ```
+
+### 并发编程
+
+#### 1. 线程管理
+- **创建和管理线程**：
+  ```cpp
+  std::thread t([]() {
+      std::cout << "Hello from thread" << std::endl;
+  });
+  t.join(); // 等待线程结束
+  ```
+- **资源安全**：使用互斥量`std::mutex`保护共享资源，避免数据竞争。
+
+#### 
+
+2. 互斥量 (Mutex) 和锁 (Lock)
+- **互斥量**：用于保证多线程访问共享资源的互斥性。
+  ```cpp
+  std::mutex mtx;
+  mtx.lock();
+  // 临界区
+  mtx.unlock();
+  ```
+- **`std::lock_guard`**：自动管理锁的获取和释放，防止死锁。
+  ```cpp
+  std::lock_guard<std::mutex> guard(mtx);
+  // 临界区，锁在作用域结束时自动释放
+  ```
+
+#### 3. 条件变量 (Condition Variable)
+- **作用**：线程间通信机制，允许线程在条件满足时被唤醒。
+  ```cpp
+  std::condition_variable cv;
+  std::mutex mtx;
+  bool ready = false;
+
+  std::unique_lock<std::mutex> lock(mtx);
+  cv.wait(lock, []{ return ready; }); // 等待条件满足
+  ```
+- **`notify_one()`和`notify_all()`**：
+  - `notify_one()`：唤醒一个等待的线程。
+  - `notify_all()`：唤醒所有等待的线程。
+
+#### 4. 原子操作 (Atomic Operations)
+- **作用**：`std::atomic`提供对基本类型的原子操作，避免数据竞争。
+  ```cpp
+  std::atomic<int> count(0);
+  count++;
+  ```
+- **内存序 (Memory Order)**：
+  - `memory_order_relaxed`：不保证顺序性，仅保证原子性。
+  - `memory_order_acquire`：获取操作，防止后续读写重排序。
+  - `memory_order_release`：释放操作，防止之前读写重排序。
+
+# C++标准库
+### 容器类（Containers）
+
+#### 1. `std::vector`与`std::deque`的区别是什么？分别在什么场景下使用？
+- **区别**：
+  - **底层结构**：`std::vector`使用动态数组实现，内存连续；`std::deque`（双端队列）使用双向链表块，每个块内存连续，但整体不连续。
+  - **插入删除效率**：`std::vector`在尾部插入、删除效率高，但在头部插入、删除效率低；`std::deque`在头尾插入、删除效率都较高。
+  - **内存使用**：`std::vector`内存连续，适合大量数据存取；`std::deque`内存分块，不适合随机访问。
+- **使用场景**：
+  - `std::vector`适用于需要随机访问和尾部操作的场景，如排序、查找。
+  - `std::deque`适用于需要频繁在头尾进行插入删除操作的场景，如双端队列操作。
+
+#### 2. `std::list`的优缺点是什么？在什么情况下使用`std::list`而不是`std::vector`？
+- **优点**：
+  - 双向链表结构，任意位置插入、删除效率高（O(1)）。
+  - 删除元素时不会影响其他元素的引用或指针。
+- **缺点**：
+  - 无法进行随机访问（O(n)），需要顺序遍历。
+  - 额外的指针开销，内存不连续。
+- **使用场景**：
+  - 需要频繁的中间插入、删除操作时（如LRU缓存）。
+  - 元素个数不确定、不断插入删除时使用`std::list`。
+
+#### 3. `std::map`和`std::unordered_map`的底层实现和性能差异是什么？如何选择使用它们？
+- **底层实现**：
+  - `std::map`基于红黑树（有序容器），元素按键值有序排列。
+  - `std::unordered_map`基于哈希表（无序容器），元素无序排列。
+- **性能差异**：
+  - `std::map`插入、删除、查找的时间复杂度为`O(log n)`。
+  - `std::unordered_map`的插入、删除、查找的平均时间复杂度为`O(1)`，但最坏情况下为`O(n)`（哈希冲突严重时）。
+- **选择**：
+  - 需要有序键值对时，选择`std::map`。
+  - 对性能要求高且不需要有序时，选择`std::unordered_map`。
+
+#### 4. 如何自定义`std::set`和`std::map`的排序规则？举例说明。
+- 自定义排序规则可以通过提供一个比较函数对象或函数指针，在声明`std::set`或`std::map`时指定。
+  ```cpp
+  struct Compare {
+      bool operator()(const int& lhs, const int& rhs) const {
+          return lhs > rhs; // 降序排序
+      }
+  };
+  std::set<int, Compare> mySet; // 使用自定义比较函数降序排序
+  ```
+
+#### 5. 在什么情况下使用`std::array`而不是普通数组？`std::array`的优点是什么？
+- **使用场景**：
+  - 需要静态大小的数组，但希望获得类似标准容器的接口。
+- **优点**：
+  - 提供了与标准容器一致的接口（如`size()`、`begin()`等）。
+  - 更加安全：有边界检查，如`at()`方法可以抛出异常。
+  - 支持拷贝和赋值操作，而普通数组不支持整体赋值。
+
+#### 6. `std::priority_queue`和`std::multiset`都可以用来管理有序元素集合，它们的区别和使用场景是什么？
+- **区别**：
+  - `std::priority_queue`基于最大堆实现，内部元素无序，只能访问最大元素，删除也是最大元素。
+  - `std::multiset`基于红黑树实现，内部元素有序，可以快速插入、删除和查找任意元素，且允许重复元素。
+- **使用场景**：
+  - `std::priority_queue`适用于需要频繁获取最大（或最小）元素的场景，如任务调度。
+  - `std::multiset`适用于需要对有序数据集进行插入、删除、查找，并允许重复元素的场景，如统计不同成绩的学生人数。
+
+### 算法（Algorithms）
+
+#### 1. `std::sort`和`std::stable_sort`的区别是什么？分别有哪些适用场景？
+- **区别**：
+  - `std::sort`使用快速排序或混合排序算法，不保证相同元素的相对顺序，复杂度为`O(n log n)`。
+  - `std::stable_sort`使用归并排序算法，保证相同元素的相对顺序，复杂度也为`O(n log n)`，但空间复杂度较高。
+- **使用场景**：
+  - 对顺序没有要求时，使用`std::sort`。
+  - 需要保持相同元素相对顺序时，使用`std::stable_sort`。
+
+#### 2. 如何使用`std::transform`来对容器中的每个元素进行转换？举例说明。
+- `std::transform`可以将一个或两个范围内的元素通过某个操作转换到另一个范围。
+  ```cpp
+  std::vector<int> vec = {1, 2, 3, 4};
+  std::vector<int> result(vec.size());
+
+  // 每个元素加 1
+  std::transform(vec.begin(), vec.end(), result.begin(), [](int x) { return x + 1; });
+
+  // result 现在是 {2, 3, 4, 5}
+  ```
+
+#### 3. 如何使用`std::find_if`查找容器中满足特定条件的元素？
+- `std::find_if`用于查找第一个满足特定条件的元素。
+  ```cpp
+  std::vector<int> vec = {1, 2, 3, 4, 5};
+  auto it = std::find_if(vec.begin(), vec.end(), [](int x) { return x > 3; });
+  if (it != vec.end()) {
+      std::cout << "Found: " << *it << std::endl; // 输出 4
+  }
+  ```
+
+#### 4. 解释`std::lower_bound`和`std::upper_bound`的用途及区别？它们在什么情况下会被使用？
+- **用途**：
+  - `std::lower_bound`返回第一个不小于（即大于等于）给定值的位置。
+  - `std::upper_bound`返回第一个大于给定值的位置。
+- **区别**：
+  - `std::lower_bound`查找的是第一个大于或等于目标值的元素。
+  - `std::upper_bound`查找的是第一个大于目标值的元素。
+- **使用场景**：
+  - 用于有序容器中查找元素范围，如统计某个值出现的次数：
+  ```cpp
+  std::vector<int> vec = {1, 2, 2, 3, 3, 3, 4};
+  auto lb = std::lower_bound(vec.begin(), vec.end(), 3); // 指向第一个3
+  auto ub = std::upper_bound(vec.begin(), vec.end(), 3); // 指向4
+  int count = ub - lb; // 3出现的次数
+  ```
+
+#### 5. 如何在不修改源容器的情况下，将容器的前几个元素进行排序？
+- 使用`std::partial_sort`对容器的前`n`个元素进行排序：
+  ```cpp
+  std::vector<int> vec = {3, 1, 4, 1, 5, 9};
+  std::partial_sort(vec.begin(), vec.begin() + 3, vec.end()); // 前3个元素排序
+  // vec 现在是 {1, 1, 3, 4, 5, 9}
+  ```
+
+#### 6. 如何用标准库的算法函数来移除容器中的所有奇数元素？请举例说明。
+- 使用`std::remove_if`和`erase`删除奇数元素：
+  ```cpp
+  std::vector<int> vec = {1, 2, 3, 4, 5, 6};
+  vec.erase(std::remove_if(vec.begin(), vec.end(), [](int x) { return x % 2 != 0; }), vec.end());
+  // vec 现在是 {2, 4, 6}
+  ```
+
+### 智能指针（Smart Pointers）
+
+#### 1. `std::shared_ptr`、`std::weak_ptr`和`std::unique_ptr`各有什么特点？分别适用于哪些场景？
+- **`std::shared_ptr`**：
+  - 共享所有权
+
+的智能指针，多个`shared_ptr`可以指向同一个对象。
+- 适用于需要共享所有权的场景，例如：共享资源管理。
+- **`std::unique_ptr`**：
+  - 独占所有权的智能指针，不能复制，但可以转移所有权（通过`std::move`）。
+  - 适用于明确单一所有权的场景，例如：动态资源管理。
+- **`std::weak_ptr`**：
+  - 非所有权智能指针，用于打破`std::shared_ptr`之间的循环引用。
+  - 适用于缓存、观察者模式等需要弱引用的场景。
+
+#### 2. 如何创建一个自定义删除器（deleter）并与`std::unique_ptr`一起使用？
+- 自定义删除器通过传递删除器函数对象或函数指针给`std::unique_ptr`。
+  ```cpp
+  std::unique_ptr<int, void(*)(int*)> ptr(new int, [](int* p){
+      std::cout << "Deleting pointer" << std::endl;
+      delete p;
+  });
+  ```
+
+#### 3. 为什么不能将`std::unique_ptr`拷贝给另一个`std::unique_ptr`？如何在函数中传递`std::unique_ptr`？
+- `std::unique_ptr`独占所有权，不允许拷贝以防止双重释放错误。
+- 可以通过`std::move`将所有权转移给另一个`std::unique_ptr`。
+  ```cpp
+  void func(std::unique_ptr<int> p) { /* 使用p */ }
+  std::unique_ptr<int> ptr(new int(10));
+  func(std::move(ptr)); // 转移所有权
+  ```
+
+#### 4. 解释`std::weak_ptr`的作用以及它如何解决`std::shared_ptr`的循环引用问题。
+- **作用**：
+  - `std::weak_ptr`不增加引用计数，可以引用由`std::shared_ptr`管理的对象，避免循环引用导致的内存泄漏。
+- **解决循环引用**：
+  - 两个`std::shared_ptr`互相引用会导致引用计数无法归零，产生内存泄漏。
+  - 用`std::weak_ptr`打破循环引用，当`std::shared_ptr`计数为零时，内存仍能被释放。
+
+#### 5. 如何将一个原始指针转换为`std::shared_ptr`？需要注意什么？
+- 使用`std::make_shared`或直接构造`std::shared_ptr`。
+  ```cpp
+  std::shared_ptr<int> sptr1 = std::make_shared<int>(10);
+  std::shared_ptr<int> sptr2(new int(20)); // 可能会多次分配内存，不推荐
+  ```
+- **注意事项**：
+  - 尽量使用`std::make_shared`来避免多次内存分配。
+  - 不要重复使用原始指针创建多个`std::shared_ptr`，否则会导致双重释放问题。
+
+### 正则表达式（Regular Expressions）
+
+#### 1. C++标准库中的正则表达式类有哪些？如何使用它们进行模式匹配？
+- 常见的正则表达式类：
+  - `std::regex`: 表示一个正则表达式对象。
+  - `std::smatch` / `std::cmatch`: 表示匹配结果的集合。
+  - `std::regex_search`: 查找字符串中匹配的子串。
+  - `std::regex_match`: 匹配整个字符串。
+- **示例**：
+  ```cpp
+  std::regex re("\\d+"); // 匹配数字
+  std::string s = "abc123def";
+  std::smatch match;
+  if (std::regex_search(s, match, re)) {
+      std::cout << "Found: " << match[0] << std::endl; // 输出 123
+  }
+  ```
+
+#### 2. 如何使用`std::regex`提取出字符串中的所有数字？请提供代码示例。
+- 使用`std::sregex_iterator`遍历所有匹配结果：
+  ```cpp
+  std::regex re("\\d+"); // 匹配数字
+  std::string s = "abc123def456ghi";
+  for (std::sregex_iterator it(s.begin(), s.end(), re), end; it != end; ++it) {
+      std::cout << "Found: " << it->str() << std::endl; // 输出 123 和 456
+  }
+  ```
+
+#### 3. 解释`std::regex_match`和`std::regex_search`的区别。
+- `std::regex_match`：只在整个字符串与正则表达式完全匹配时返回`true`。
+  ```cpp
+  std::regex re("\\d+");
+  std::string s = "123";
+  bool match = std::regex_match(s, re); // true，因为整个字符串是数字
+  ```
+- `std::regex_search`：查找字符串中的部分内容与正则表达式匹配时返回`true`。
+  ```cpp
+  std::regex re("\\d+");
+  std::string s = "abc123";
+  bool match = std::regex_search(s, re); // true，因为123与正则表达式匹配
+  ```
+
+#### 4. `std::regex_replace`的作用是什么？如何用它将一个字符串中的所有空格替换为下划线？
+- **作用**：
+  - `std::regex_replace`用于将匹配的子串替换为指定的内容。
+- **示例**：
+  ```cpp
+  std::string s = "a b c";
+  std::regex re("\\s+"); // 匹配空格
+  std::string result = std::regex_replace(s, re, "_");
+  // result 现在是 "a_b_c"
+  ```
+
+#### 5. 正则表达式在C++中的常见性能问题有哪些？如何优化正则表达式的性能？
+- **性能问题**：
+  - 不当的回溯导致性能下降，如贪婪模式和过多的捕获组。
+  - 重复编译正则表达式，影响性能。
+- **优化方法**：
+  - 使用非贪婪模式（`*?`, `+?`）减少回溯。
+  - 预先编译正则表达式对象，并重复使用。
+  - 合理分组，减少不必要的捕获组。
+
+### 多线程库（Threading Library）
+
+#### 1. 如何使用`std::thread`启动一个新线程？如何传递参数给线程函数？
+- 启动新线程：
+  ```cpp
+  void print(int x) {
+      std::cout << "Value: " << x << std::endl;
+  }
+  std::thread t(print, 10); // 创建并启动线程，传递参数10
+  t.join(); // 等待线程执行结束
+  ```
+
+#### 2. `std::async`与`std::thread`的区别是什么？分别在什么场景下使用？
+- **区别**：
+  - `std::thread`启动一个新线程并立即执行，不返回结果。
+  - `std::async`启动一个异步任务，可以选择在新线程或主线程中执行，返回`std::future`用于获取结果。
+- **使用场景**：
+  - `std::thread`适合不需要返回值的任务。
+  - `std::async`适合需要返回值的异步任务。
+
+#### 3. 如何使用`std::mutex`保护共享数据？在使用`std::lock_guard`时需要注意什么？
+- 使用`std::mutex`：
+  ```cpp
+  std::mutex mtx;
+  void safe_increment(int& counter) {
+      std::lock_guard<std::mutex> guard(mtx);
+      ++counter;
+  }
+  ```
+- **注意**：
+  - `std::lock_guard`在作用域结束时自动释放锁，防止死锁。
+  - 避免多重锁定（即在同一线程中再次锁定同一互斥量）。
+
+#### 4. 解释`std::future`和`std::promise`的作用以及它们是如何协同工作的。
+- **`std::future`**：
+  - 用于获取异步操作的结果。
+- **`std::promise`**：
+  - 用于设置异步操作的结果。
+- **协同工作**：
+  - `std::promise`设置值，`std::future`获取值：
+  ```cpp
+  std::promise<int> prom;
+  std::future<int> fut = prom.get_future();
+  std::thread t([](std::promise<int>& p) {
+      p.set_value(10); // 设置异步操作结果
+  }, std::ref(prom));
+  std::cout << fut.get() << std::endl; // 输出10
+  t.join();
+  ```
+
+#### 5. 什么是条件变量（`std::condition_variable`）？如何在生产者-消费者模型中使用它？
+- **条件变量**：用于线程间同步，等待条件满足时唤醒等待线程。
+- **生产者-消费者模型**：
+  ```cpp
+  std::queue<int> q;
+  std::mutex mtx;
+  std::condition_variable cv;
+
+  void producer()
+
+{
+std::unique_lock<std::mutex> lock(mtx);
+q.push(1); // 生产数据
+cv.notify_one(); // 通知消费者
+}
+
+void consumer() {
+std::unique_lock<std::mutex> lock(mtx);
+cv.wait(lock, []{ return !q.empty(); }); // 等待数据
+int val = q.front();
+q.pop(); // 消费数据
+}
+  ```
+
+#### 6. `std::lock_guard`和`std::unique_lock`有什么区别？在什么情况下应该使用`std::unique_lock`？
+- **区别**：
+  - `std::lock_guard`：简单锁管理，锁定时创建，作用域结束时解锁，无法手动控制解锁。
+  - `std::unique_lock`：更灵活，支持延迟锁定、手动解锁、锁迁移。
+- **使用场景**：
+  - 需要灵活控制锁定时间或与条件变量配合时，使用`std::unique_lock`。
+
+# Boost
+### Boost库的面试题
+
+#### 1. 什么是Boost库？它与C++标准库之间的关系是什么？
+- **问题解答**：
+  - Boost库是一个开源的C++库集合，涵盖了许多常用的功能，如智能指针、线程库、正则表达式、容器等。
+  - Boost库通常被视为C++标准库的“实验场”，很多Boost库中的组件后来被纳入C++标准库（如`std::shared_ptr`、`std::regex`等）。
+  - 使用Boost库可以帮助开发者在标准库的基础上获得更多的功能和更高的效率。
+
+#### 2. 如何将Boost库集成到项目中？有哪些常用的集成方法？
+- **问题解答**：
+  - **集成方法**：
+    1. **头文件方式**：对于只包含头文件的Boost库，直接包含相应的头文件即可，例如：`#include <boost/algorithm/string.hpp>`。
+    2. **静态链接/动态链接**：对于需要编译的Boost库（如`boost.thread`、`boost.system`），需要先编译Boost库，再将生成的库文件链接到项目中。
+    3. **使用包管理工具**：可以使用包管理工具（如`vcpkg`、`conan`）来安装和集成Boost库。
+  - **编译Boost库**：
+    - 使用`bootstrap`脚本生成构建系统：
+      ```bash
+      ./bootstrap.sh
+      ```
+    - 使用`b2`进行编译：
+      ```bash
+      ./b2
+      ```
+
+#### 3. 什么是`boost::shared_ptr`？它与`std::shared_ptr`有何区别？
+- **问题解答**：
+  - `boost::shared_ptr`是Boost库中的一个智能指针，用于共享所有权管理动态分配的对象。它会自动管理指向同一对象的多个指针，并在最后一个`shared_ptr`销毁时释放对象。
+  - 区别：
+    - `std::shared_ptr`是在C++11标准中引入的，`boost::shared_ptr`是其先驱。
+    - `std::shared_ptr`中引入了一些新特性，如支持`std::make_shared`和`std::weak_ptr`的构造。
+    - `boost::shared_ptr`可以在不支持C++11的编译器中使用，但标准库更具可移植性。
+
+#### 4. 如何使用`boost::asio`实现一个简单的TCP服务器？
+- **问题解答**：
+  - 通过`boost::asio`实现异步网络编程，包括TCP、UDP等通信协议。以下是实现一个简单TCP服务器的代码示例：
+  ```cpp
+  #include <boost/asio.hpp>
+  #include <iostream>
+
+  using boost::asio::ip::tcp;
+
+  void handle_connection(tcp::socket& socket) {
+      std::string message = "Hello from server\n";
+      boost::asio::write(socket, boost::asio::buffer(message));
+  }
+
+  int main() {
+      boost::asio::io_service io_service;
+
+      tcp::acceptor acceptor(io_service, tcp::endpoint(tcp::v4(), 8080));
+      std::cout << "Server is listening on port 8080..." << std::endl;
+
+      while (true) {
+          tcp::socket socket(io_service);
+          acceptor.accept(socket);
+          handle_connection(socket);
+      }
+
+      return 0;
+  }
+  ```
+
+#### 5. `boost::bind`和`std::bind`的区别是什么？为什么推荐使用`std::bind`？
+- **问题解答**：
+  - `boost::bind`和`std::bind`都是用于函数绑定和参数绑定的工具。
+  - 区别：
+    - `boost::bind`可以在不支持C++11的编译器上使用。
+    - `std::bind`是C++11标准的一部分，更加规范和现代化，推荐在C++11及以上的环境中使用`std::bind`。
+  - 推荐使用`std::bind`的原因是：它更符合C++标准，并且与标准库的其他部分（如`std::function`、`std::placeholders`）结合更紧密。
+
+#### 6. 解释`boost::optional`的作用及使用场景。
+- **问题解答**：
+  - `boost::optional`是一个容器类，用于表示一个可能存在或者不存在的值，避免使用空指针或无效对象。
+  - 作用：
+    - 可以在返回值或成员变量中表示某个值可能不存在。
+    - 提高代码的可读性和安全性，避免未初始化或无效对象的使用。
+  - 使用场景：
+    - 需要返回一个可能无效的值而不是空指针时。
+    - 参数可以有默认值但未提供时，使用`boost::optional`来表示该参数的状态。
+  - 示例：
+  ```cpp
+  #include <boost/optional.hpp>
+  #include <iostream>
+
+  boost::optional<int> find_value(bool condition) {
+      if (condition) {
+          return 42; // 有效值
+      } else {
+          return boost::none; // 无效值
+      }
+  }
+
+  int main() {
+      auto result = find_value(true);
+      if (result) {
+          std::cout << "Found: " << *result << std::endl;
+      } else {
+          std::cout << "Value not found" << std::endl;
+      }
+      return 0;
+  }
+  ```
+
+#### 7. 解释`boost::variant`和`boost::any`的区别以及使用场景。
+- **问题解答**：
+  - **`boost::variant`**：
+    - 类似于联合体（union），但更安全，可以存储不同类型的值，但只能是预先定义的类型之一。
+    - 使用场景：需要在一个变量中存储多种可能类型的值，并且这些类型是已知的、固定的。
+  - **`boost::any`**：
+    - 可以存储任意类型的值，不要求预先定义存储的类型。
+    - 使用场景：需要存储任意类型的值，类型在编译时不确定。
+  - **区别**：
+    - `boost::variant`在编译时确定类型集合，类型安全性更高，但灵活性较低。
+    - `boost::any`可以存储任意类型，但需要手动检查和转换类型，类型安全性较低，但灵活性更高。
+
+#### 8. 如何使用`boost::filesystem`遍历目录中的所有文件？
+- **问题解答**：
+  - `boost::filesystem`提供了对文件系统操作的支持，包括文件遍历、文件操作等。
+  - 代码示例：
+  ```cpp
+  #include <boost/filesystem.hpp>
+  #include <iostream>
+
+  namespace fs = boost::filesystem;
+
+  void list_files(const fs::path& directory) {
+      if (fs::exists(directory) && fs::is_directory(directory)) {
+          for (const auto& entry : fs::directory_iterator(directory)) {
+              std::cout << entry.path().string() << std::endl;
+          }
+      }
+  }
+
+  int main() {
+      fs::path directory = "./";
+      list_files(directory);
+      return 0;
+  }
+  ```
+
+#### 9. 解释`boost::thread`和`std::thread`的区别及它们之间的可移植性问题。
+- **问题解答**：
+  - `boost::thread`和`std::thread`都用于多线程编程，但`boost::thread`在C++11之前引入，并提供跨平台的线程管理。
+  - 区别：
+    - `std::thread`是C++11标准的一部分，具备更好的可移植性和兼容性。
+    - `boost::thread`可以在不支持C++11的环境中使用。
+  - 随着C++11的普及，推荐使用`std::thread`，因为它符合标准，并且在功能上比`boost::thread`更完善（如`std::async`、`std::future`等功能）。
+
+#### 10. `boost::property_tree`的作用是什么？如何使用它解析一个JSON文件？
+- **问题解答**：
+  - `boost::property_tree`提供了一种通用的数据结构，用于存储和访问键值对数据。它支持多种格式，如JSON、XML、INI等。
+  - 使用它可以方便地解析、修改、保存配置文件。
+  - 解析JSON文件的代码示例：
+  ```cpp
+  #include <boost/property_tree/ptree.hpp>
+  #include <boost/property_tree/json_parser.hpp>
+  #include <iostream>
+
+  int main() {
+      boost::property_tree::ptree pt;
+      boost::property_tree::read_json("config.json", pt);
+
+      std::string name = pt.get<std::string>("name");
+      int age = pt.get<int>("age");
+
+      std::cout << "Name: " << name << ", Age: " << age << std::endl;
+      return 0;
+  }
+  ```
+  - `config.json`文件示例：
+  ```json
+  {
+      "
+
+name": "John",
+"age": 30
+}
+  ```
 
 
 
