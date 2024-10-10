@@ -6582,13 +6582,12 @@ q.pop(); // 消费数据
   }
   ```
   - `config.json`文件示例：
+
   ```json
   {
-      "
-
-name": "John",
-"age": 30
-}
+      "name": "John",
+      "age": 30
+   }
   ```
 
 
