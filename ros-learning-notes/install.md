@@ -212,3 +212,10 @@ rviz
 ```
 
 这就完成了ROS Noetic的安装。
+
+# 12、运行镜像相关
+```
+sudo docker build -t foxy_noetic_ubuntu20.04:v1 .
+chmod +x start.sh
+sudo docker exec -it dadp-ros-dev /bin/bash
+```
