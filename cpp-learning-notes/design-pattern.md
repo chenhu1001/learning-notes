@@ -1,3 +1,21 @@
+| 创建型 (Creational) | 结构型 (Structural) | 行为型 (Behavioral)               |
+|----------------------|---------------------|-----------------------------------|
+| 工厂方法 Factory Method | 适配器 Adapter        | 责任链 Chain of Responsibility    |
+| 抽象工厂 Abstract Factory | 桥接 Bridge          | 命令 Command                      |
+| 建造者 Builder         | 组合 Composite        | 解释器 Interpreter                |
+| 原型 Prototype         | 装饰 Decorator        | 迭代器 Iterator                   |
+| 单例 Singleton         | 外观 Facade           | 中介 Mediator                     |
+|                      | 享元 Flyweight       | 备忘录 Memento                    |
+|                      | 代理 Proxy           | 观察者 Observer                   |
+|                      |                     | 状态 State                        |
+|                      |                     | 策略 Strategy                     |
+|                      |                     | 模板方法 Template Method          |
+|                      |                     | 访问者 Visitor                    |
+
+* 创建型包含5种模式，涉及对象/对象组合的创建构建。
+* 结构性包含7种模式，涉及对象/类之间的关系。
+* 行为型包含11种模式，涉及对象/类的行为、状态、流程。
+
 在C++中实现创建型设计模式，最常用的是工厂模式、抽象工厂模式、单例模式、建造者模式和原型模式。下面是每种模式的简单实现例子：
 
 ### 1. 工厂模式（Factory Pattern）
