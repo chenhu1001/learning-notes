@@ -940,3 +940,189 @@ int main() {
 - 使用 `reinterpret_cast` 和 `const_cast` 时要非常小心，因为它们可能导致未定义行为或类型安全问题。
 - `dynamic_cast` 适用于有虚函数的类，通常用于安全的向下转换。
 - `static_cast` 是大多数类型转换的首选，因为它在编译时进行类型检查，比C风格强制转换更安全。
+
+
+# 可变参数模板
+在C++中，模板编程允许我们通过递归的方式处理可变数量的参数。您提到的两个方面——**参数个数递减的函数模板递归调用**和**参数类型递减的类模板递归继承或组合**，在实际开发中有广泛的应用，如实现可变参数的函数（类似于`printf`）或构建类似`std::tuple`的数据结构。
+
+以下将分别对这两个概念进行解释并提供示例代码。
+
+---
+
+## 1. 参数个数递减的函数模板递归调用
+
+**概念说明：**
+
+通过定义一系列函数模板，其中每个模板处理一个参数并递归调用自身来处理剩余的参数。递归终止的条件是参数个数减少到零，此时定义一个特化版本来结束递归。
+
+**示例：实现一个打印多个参数的函数 `print`**
+
+```cpp
+#include <iostream>
+
+// 基础情况：当没有参数时，不执行任何操作
+void print() {
+    std::cout << std::endl;
+}
+
+// 递归函数模板：处理第一个参数并递归处理剩余的参数
+template <typename T, typename... Args>
+void print(const T& first, const Args&... args) {
+    std::cout << first << " ";
+    print(args...); // 递归调用，参数个数逐一递减
+}
+
+int main() {
+    print(1, 2.5, "Hello", 'A'); // 输出: 1 2.5 Hello A 
+    return 0;
+}
+```
+
+**解释：**
+
+1. **基础情况**：当没有参数传入时，调用`print()`，仅输出一个换行符，结束递归。
+2. **递归模板**：`print`函数模板接受一个参数`first`和一个参数包`args`。首先处理`first`（例如打印它），然后递归调用`print(args...)`，此时参数个数减少一个。
+3. **终止条件**：当所有参数都被处理后，最终调用无参数的`print()`，结束递归。
+
+---
+
+## 2. 参数类型递减的类模板递归继承或组合
+
+**概念说明：**
+
+通过类模板的递归继承或组合，将不同类型的参数存储在一个类层次结构中。每个类实例化一个成员来存储一个类型，并通过继承或组合来链接下一个成员，直到参数类型耗尽。
+
+**示例1：递归继承实现类似`std::tuple`的数据结构**
+
+```cpp
+#include <iostream>
+#include <string>
+
+// 基础情况：空结构体，用于结束递归
+struct Tuple<> {};
+
+// 递归继承的模板结构
+template <typename T, typename... Ts>
+struct Tuple<T, Ts...> : Tuple<Ts...> {
+    T value;
+
+    Tuple() = default;
+
+    Tuple(const T& v, const Ts&... vs) : Tuple<Ts...>(vs...), value(v) {}
+};
+
+// 辅助函数，用于创建Tuple实例
+template <typename... Ts>
+Tuple<Ts...> make_tuple_custom(const Ts&... ts) {
+    return Tuple<Ts...>(ts...);
+}
+
+// 辅助模板：获取Tuple中指定索引的类型
+template <std::size_t I, typename TupleType>
+struct TupleElement;
+
+// 递归定义：从派生类中查找
+template <std::size_t I, typename T, typename... Ts>
+struct TupleElement<I, Tuple<T, Ts...>> : TupleElement<I - 1, Tuple<Ts...>> {};
+
+// 特化：当I为0时，类型为当前T
+template <typename T, typename... Ts>
+struct TupleElement<0, Tuple<T, Ts...>> {
+    using type = T;
+};
+
+// 获取Tuple中指定索引的值
+template <std::size_t I, typename... Ts>
+typename TupleElement<I, Tuple<Ts...>>::type& get(Tuple<Ts...>& tuple) {
+    if constexpr (I == 0) {
+        return tuple.value;
+    } else {
+        Tuple<Ts...> & base = tuple;
+        return get<I - 1>(base);
+    }
+}
+
+int main() {
+    auto myTuple = make_tuple_custom(42, 3.14, std::string("Hello"));
+
+    std::cout << get<0>(myTuple) << std::endl; // 输出: 42
+    std::cout << get<1>(myTuple) << std::endl; // 输出: 3.14
+    std::cout << get<2>(myTuple) << std::endl; // 输出: Hello
+
+    return 0;
+}
+```
+
+**解释：**
+
+1. **基础情况**：定义一个空的`Tuple<>`结构体作为递归终止条件。
+2. **递归继承**：`Tuple<T, Ts...>`继承自`Tuple<Ts...>`，并持有一个类型为`T`的成员`value`。构造函数初始化当前的`value`并递归初始化基类。
+3. **类型获取**：`TupleElement`模板通过递归继承获取指定索引`I`的类型。
+4. **值获取**：`get<I>(tuple)`函数通过递归调用获取指定索引`I`的值。
+5. **使用示例**：在`main`函数中创建一个包含不同类型的`Tuple`实例，并通过`get`函数访问各个成员。
+
+**示例2：递归组合实现类似`std::variant`的数据结构**
+
+```cpp
+#include <iostream>
+#include <string>
+#include <variant>
+
+// 基础情况：EmptyVariant
+struct EmptyVariant {};
+
+// 递归组合的模板结构
+template <typename T, typename... Ts>
+struct Variant : Variant<Ts...> {
+    std::variant<T, typename Variant<Ts...>::variant_type> data;
+
+    Variant() = default;
+
+    Variant(const T& value) : data(value) {}
+    
+    using variant_type = std::variant<T, typename Variant<Ts...>::variant_type>;
+};
+
+// 递归终止：仅包含一个类型
+template <typename T>
+struct Variant<T> {
+    std::variant<T> data;
+
+    Variant() = default;
+
+    Variant(const T& value) : data(value) {}
+    
+    using variant_type = std::variant<T>;
+};
+
+int main() {
+    Variant<int, double, std::string> myVariant;
+    myVariant.data = 3.14;
+
+    if (std::holds_alternative<int>(myVariant.data)) {
+        std::cout << "int: " << std::get<int>(myVariant.data) << std::endl;
+    } else if (std::holds_alternative<double>(myVariant.data)) {
+        std::cout << "double: " << std::get<double>(myVariant.data) << std::endl;
+    } else if (std::holds_alternative<std::string>(myVariant.data)) {
+        std::cout << "string: " << std::get<std::string>(myVariant.data) << std::endl;
+    }
+
+    return 0;
+}
+```
+
+**解释：**
+
+1. **基础情况**：当只有一个类型`T`时，`Variant<T>`持有一个`std::variant<T>`。
+2. **递归组合**：`Variant<T, Ts...>`持有一个`std::variant<T, Variant<Ts...>::variant_type>`，实现类型的递归组合。
+3. **使用示例**：在`main`函数中创建一个可以持有`int`、`double`或`std::string`的`Variant`实例，并根据实际存储的类型进行处理。
+
+---
+
+## 总结
+
+通过上述示例，可以看出：
+
+1. **函数模板的递归调用**：利用参数个数的逐一递减，可以实现对可变参数的处理，如打印、求和等操作。这种方法简单直观，适用于需要按顺序处理参数的场景。
+
+2. **类模板的递归继承或组合**：通过递归地减少参数类型，可以构建复杂的数据结构，如`Tuple`、`Variant`等。这种方法灵活且强大，适用于需要存储和操作不同类型组合的场景。
