@@ -572,3 +572,8 @@ services:
     volumes:
       - ./frpc.ini:/etc/frp/frpc.ini
 ```
+
+## 安装青龙面板
+```
+docker run -dit -v $PWD/ql/data:/ql/data -p 5700:5700 -e QlBaseUrl="/" -e QlPort="5700" --name qinglong --hostname qinglong --restart unless-stopped whyour/qinglong:latest
+```
